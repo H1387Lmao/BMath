@@ -2,18 +2,22 @@ CXX = clang++
 CXXFLAGS ?= -std=c++17 -O2 -Wall -Wextra -Wpedantic
 LDFLAGS ?=
 
-OBJS := parser.o main.o
-DEPS := lexer.hpp parser.hpp node.hpp token.hpp codegen.hpp
+SRCS := src/parser.cpp src/main.cpp
+OBJS := $(SRCS:src/%.cpp=bin/%.o)
+DEPS := src/lexer.hpp src/parser.hpp src/node.hpp src/token.hpp src/codegen.hpp
 
-.PHONY: all clean
+.PHONY: linux windows clean
 
-all: bmath
+linux: $(OBJS)
+	$(CXX) $(LDFLAGS) $(OBJS) -o bin/bmath
 
-bmath: $(OBJS)
-	$(CXX) $(LDFLAGS) $(OBJS) -o $@
+windows: $(OBJS)
+	g++ $(LDFLAGS) $(OBJS) -o bin/bmath.exe
 
-%.o: %.cpp $(DEPS)
+bin/%.o: src/%.cpp $(DEPS)
+	@mkdir -p bin
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) bmath bmath.exe
+	rm -rf bin/*
+

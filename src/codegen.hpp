@@ -92,19 +92,19 @@ namespace codegen_detail {
                     // expect a single token argument
                     const Token* tk = nullptr;
                     for (const auto& a : node.args) if (a.tk) { tk = &*a.tk; break; }
-                    if (!tk) { text << (is64()?"xor rax, rax\n":"xor eax, eax\n"); return; }
+                    if (!tk) { text << (is64()?"  xor rax, rax\n":"xor eax, eax\n"); return; }
                     if (tk->t_type == NUMBERLITERAL) {
-                        if (is64()) text << "mov rax, " << tk->value << "\n";
-                        else text << "mov eax, " << tk->value << "\n";
+                        if (is64()) text << "  mov rax, " << tk->value << "\n";
+                        else text << "  mov eax, " << tk->value << "\n";
                     } else if (tk->t_type == IDENTIFIER) {
                         if (is64()) {
-                            text << "mov rax, [" << tk->value << "]\n";
+                            text << "  mov rax, [" << tk->value << "]\n";
                         } else {
-                            text << "mov eax, [" << tk->value << "]\n";
+                            text << "  mov eax, [" << tk->value << "]\n";
                         }
                     } else {
                         // unhandled literal kinds -> 0
-                        text << (is64()?"xor rax, rax\n":"xor eax, eax\n");
+                        text << (is64()?"  xor rax, rax\n":"  xor eax, eax\n");
                     }
                     break;
                 }
@@ -119,48 +119,48 @@ namespace codegen_detail {
                         if (node.args[2].node) right = node.args[2].node.get();
                     }
                     if (!left || !right || !op) {
-                        text << (is64()?"xor rax, rax\n":"xor eax, eax\n");
+                        text << (is64()?"  xor rax, rax\n":"  xor eax, eax\n");
                         return;
                     }
                     // Evaluate left, save, then evaluate right
                     emit_expr(*left);
-                    if (is64()) text << "push rax\n"; else text << "push eax\n";
+                    if (is64()) text << "  push rax\n"; else text << "  push eax\n";
                     emit_expr(*right);
-                    if (is64()) text << "pop rbx\n"; else text << "pop ebx\n";
+                    if (is64()) text << "  pop rbx\n"; else text << "  pop ebx\n";
 
                     const std::string& o = op->value;
                     if (o == "+") {
-                        if (is64()) text << "add rax, rbx\n"; else text << "add eax, ebx\n";
+                        if (is64()) text << "  add rax, rbx\n"; else text << "  add eax, ebx\n";
                     } else if (o == "-") {
                         if (is64()) {
-                            text << "mov rcx, rax\n";
-                            text << "mov rax, rbx\n";
-                            text << "sub rax, rcx\n";
+                            text << "  mov rcx, rax\n";
+                            text << "  mov rax, rbx\n";
+                            text << "  sub rax, rcx\n";
                         } else {
-                            text << "mov ecx, eax\n";
-                            text << "mov eax, ebx\n";
-                            text << "sub eax, ecx\n";
+                            text << "  mov ecx, eax\n";
+                            text << "  mov eax, ebx\n";
+                            text << "  sub eax, ecx\n";
                         }
                     } else if (o == "*") {
-                        if (is64()) text << "imul rax, rbx\n"; else text << "imul eax, ebx\n";
+                        if (is64()) text << "  imul rax, rbx\n"; else text << "  imul eax, ebx\n";
                     } else if (o == "/" || o == "%") {
                         // signed division: rdx:rax / rbx -> rax rem rdx
                         if (is64()) {
-                            text << "mov rcx, rax\n";       // rcx = right
-                            text << "mov rax, rbx\n";       // rax = left
-                            text << "cqo\n";                // sign-extend into rdx
-                            text << "idiv rcx\n";           // rax = quot, rdx = rem
+                            text << "  mov rcx, rax\n";       // rcx = right
+                            text << "  mov rax, rbx\n";       // rax = left
+                            text << "  cqo\n";                // sign-extend into rdx
+                            text << "  idiv rcx\n";           // rax = quot, rdx = rem
                             if (o == "%") text << "mov rax, rdx\n";
                         } else {
-                            text << "mov ecx, eax\n";       // ecx = right
-                            text << "mov eax, ebx\n";       // eax = left
-                            text << "cdq\n";                // sign-extend into edx
-                            text << "idiv ecx\n";           // eax = quot, edx = rem
+                            text << "  mov ecx, eax\n";       // ecx = right
+                            text << "  mov eax, ebx\n";       // eax = left
+                            text << "  cdq\n";                // sign-extend into edx
+                            text << "  idiv ecx\n";           // eax = quot, edx = rem
                             if (o == "%") text << "mov eax, edx\n";
                         }
                     } else {
                         // unknown op -> 0
-                        text << (is64()?"xor rax, rax\n":"xor eax, eax\n");
+                        text << (is64()?"  xor rax, rax\n":"xor eax, eax\n");
                     }
                     break;
                 }
@@ -173,13 +173,13 @@ namespace codegen_detail {
                         if (node.args[1].node) rhs = node.args[1].node.get();
                     }
                     if (!id || !rhs) {
-                        text << (is64()?"xor rax, rax\n":"xor eax, eax\n");
+                        text << (is64()?"  xor rax, rax\n":"xor eax, eax\n");
                         return;
                     }
                     declare_var(id->value);
                     emit_expr(*rhs); // result in rax/eax
-                    if (is64()) text << "mov [" << id->value << "], rax\n";
-                    else text << "mov [" << id->value << "], eax\n";
+                    if (is64()) text << "  mov [" << id->value << "], rax\n";
+                    else text << "  mov [" << id->value << "], eax\n";
                     // Leave result of assignment in rax/eax
                     break;
                 }
@@ -191,7 +191,7 @@ namespace codegen_detail {
                     break;
                 }
                 default: {
-                    text << (is64()?"xor rax, rax\n":"xor eax, eax\n");
+                    text << (is64()?"  xor rax, rax\n":"  xor eax, eax\n");
                 }
             }
         }

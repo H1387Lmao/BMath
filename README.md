@@ -8,13 +8,11 @@
 ## Linux
 
 ```sh
-make all
+make linux
 ```
 
 ## Windows (With MYSYS G++)
 
-```bat
-g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -c parser.cpp -o parser.o
-g++ -std=c++17 -O2 -Wall -Wextra -Wpedantic -c main.cpp -o main.o
-g++  parser.o main.o -o bmath
+```cmd
+make windows
 ```
