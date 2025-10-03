@@ -41,6 +41,27 @@ while(*p != '\0'){
 				++p;
 			}
 			tokens.emplace_back(NUMBERLITERAL, res);
+		}else if(*p == '"'){
+			++p;
+			std::string res(1, *p);
+			++p;
+			while (*p!= '"'){
+				res += *p;
+				++p;
+			}
+			tokens.emplace_back(STRINGLITERAL, res);
+			++p;
+		}else if(*p == '\''){
+			++p;
+			std::string res(1, *p);
+			tokens.emplace_back(CHARLITERAL, res);
+			++p;
+			if (*p != '\''){
+				std::cerr << "Expected single quote (') to finish character, but found (' " << *p << " ') instead\n";
+			}else{
+				++p;
+			}
+			
 		}else{
 			tokens.emplace_back(SYMBOLIC, std::string(1, *p));
 			++p;
