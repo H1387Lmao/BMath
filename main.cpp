@@ -70,9 +70,9 @@ static void detect_defaults(CodegenOptions& opts){
     opts.os = TargetOS::Linux;
 #endif
 #if defined(_M_X64) || defined(__x86_64__) || defined(__amd64__)
-    opts.arch = TargetArch::X86_64;
+    opts.arch = TargetArch::X64;
 #else
-    opts.arch = TargetArch::X86_32;
+    opts.arch = TargetArch::X86;
 #endif
 }
 
@@ -81,7 +81,8 @@ int main(int argc, char** argv){
     // If -o is provided, generate NASM assembly to file. Otherwise, print AST.
     std::string input;
     std::string input_path;
-    std::string out_path; // assembly output, optional
+    std::string out_path; // assembly output, option
+    std::string target;
 
     // Parse args (very simple)
     for (int i = 1; i < argc; ++i){
@@ -91,6 +92,8 @@ int main(int argc, char** argv){
         } else if (arg == "-h" || arg == "--help"){
             std::cout << "Usage: bmath [input-file] [-o output.asm]\n";
             return 0;
+	} else if ((arg == "-t" || arg == "--target") && i + 1 < argc){
+	    target = argv[++i];
         } else if (!arg.empty() && arg[0] == '-'){
             std::cerr << "Unknown option: " << arg << "\n";
             return 1;
@@ -116,6 +119,24 @@ int main(int argc, char** argv){
     if (!out_path.empty()){
         // Codegen to assembly file
         CodegenOptions opts; detect_defaults(opts);
+	if(!target.empty()){
+		if(target == "win64"){
+			opts.arch = TargetArch::X64;
+			opts.os = TargetOS::Windows;
+		} else if(target=="win32"){
+			opts.arch = TargetArch::X86;
+			opts.os = TargetOS::Windows;
+		} else if(target=="elf64"){
+			opts.arch = TargetArch::X64;
+			opts.os = TargetOS::Linux;
+		} else if(target=="elf32"){
+			opts.arch = TargetArch::X86;
+			opts.os = TargetOS::Linux;
+		} else{
+			std::cerr << "Error: invalis target: " << target << "\n";
+			return 1;
+		}
+	}
         std::string asmText = generate_asm(ast, opts);
         std::ofstream ofs(out_path, std::ios::binary);
         if (!ofs){

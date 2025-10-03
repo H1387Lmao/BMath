@@ -13,11 +13,11 @@
 // - Binary ops: +, -, *, /, %
 // - Results of the last statement returned as int from main
 
-enum class TargetArch { X86_32, X86_64 };
+enum class TargetArch { X86, X64 };
 enum class TargetOS { Linux, Windows };
 
 struct CodegenOptions {
-    TargetArch arch{TargetArch::X86_64};
+    TargetArch arch{TargetArch::X64};
     TargetOS os{TargetOS::Linux};
 };
 
@@ -73,7 +73,7 @@ namespace codegen_detail {
         std::ostringstream bss;
         std::unordered_map<std::string, bool> declared; // var -> declared in .bss
 
-        inline bool is64() const { return opts.arch == TargetArch::X86_64; }
+        inline bool is64() const { return opts.arch == TargetArch::X64; }
 
         inline void declare_var(const std::string& name) {
             if (declared.count(name)) return;
@@ -212,10 +212,10 @@ inline std::string generate_asm(const AstNode& ast, const CodegenOptions& option
 
     // Sections and globals
     out << "section .text\n";
-    if (options.arch == TargetArch::X86_64) out << "default rel\n";
+    if (options.arch == TargetArch::X64) out << "default rel\n";
     out << "global main\n";
     out << "main:\n";
-    if (options.arch == TargetArch::X86_64) {
+    if (options.arch == TargetArch::X64) {
         out << "  push rbp\n  mov rbp, rsp\n";
     } else {
         out << "  push ebp\n  mov ebp, esp\n";
@@ -226,7 +226,7 @@ inline std::string generate_asm(const AstNode& ast, const CodegenOptions& option
     out << E.text.str();
 
     // Move result to 32-bit return (if 64-bit, C ABI returns in eax lower 32 for int)
-    if (options.arch == TargetArch::X86_64) {
+    if (options.arch == TargetArch::X64) {
         out << "  ; function epilogue\n  mov eax, eax\n  mov rsp, rbp\n  pop rbp\n  ret\n";
     } else {
         out << "  ; function epilogue\n  mov eax, eax\n  mov esp, ebp\n  pop ebp\n  ret\n";
